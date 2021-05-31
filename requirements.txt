@@ -4,3 +4,4 @@ adafruit_hid
 adafruit_neotrellis
 adafruit_seesaw
 adafruit_displayio_sh1107
+adafruit_imageload

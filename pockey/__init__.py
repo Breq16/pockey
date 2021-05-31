@@ -1,7 +1,9 @@
 import os
+import sys
 
 import board
 import displayio
+import supervisor
 
 import adafruit_displayio_sh1107
 
@@ -11,6 +13,7 @@ from pockey.trellis import Trellis
 
 
 displayio.release_displays()
+supervisor.disable_autoreload()
 
 
 class Pockey:
@@ -25,23 +28,8 @@ class Pockey:
         self.init_trellis()
         self.init_display()
 
-        self.apps = {}
         self.current_app_name = None
         self.current_app = None
-
-        self.load_apps()
-
-    def load_apps(self):
-        apps = os.listdir("apps")
-
-        for filename in apps:
-            if filename.endswith(".py"):
-                filename = filename[:-3]
-
-            apps_module = __import__(f"apps.{filename}")
-            app_module = getattr(apps_module, filename)
-            app_class = getattr(app_module, "app")
-            self.apps[filename] = app_class(self)
 
     def init_trellis(self):
         self.trellis = Trellis(
@@ -52,11 +40,17 @@ class Pockey:
         self.display = adafruit_displayio_sh1107.SH1107(
             self.display_bus, width=128, height=64, auto_refresh=False)
 
+        self.palette = displayio.Palette(2)
+        self.palette[0] = 0x000000
+        self.palette[1] = 0xFFFFFF
+
         self.display_buttons = []
 
         pins = {"A": board.D9, "B": board.D6, "C": board.D5}
         self.display_buttons = {letter: Button(pin) for letter, pin in pins.items()}
+        self.reset_display()
 
+    def reset_display(self):
         self.canvas = displayio.Group()
         self.text = TextCanvas(self.canvas)
 
@@ -69,9 +63,12 @@ class Pockey:
                 self.handle_button(number=letter, edge=event)
 
     def handle_button(self, number, edge):
-        if number == self.HOME_BUTTON:
+        if not self.current_app:
+            return
+
+        if number == self.HOME_BUTTON and not self.current_app.OVERRIDE_HOME:
             self.load_app(self.HOME_APP)
-        elif self.current_app:
+        else:
             self.current_app.handle_button(number, edge)
 
     def load_app(self, app_name):
@@ -79,11 +76,22 @@ class Pockey:
 
     def run_app(self):
         app_name = self.current_app_name
-        app = self.apps[self.current_app_name]
+
+
+        if f"apps.{app_name}" in sys.modules:
+            del sys.modules[f"apps.{app_name}"]
+        apps_module = __import__(f"apps.{app_name}")
+        app_module = getattr(apps_module, app_name)
+        app_class = getattr(app_module, "app")
+
+        filename = app_module.__file__
+        modify_date = os.stat(filename)[9]
+
+        app = app_class(self)
         self.current_app = app
 
         app.setup()
-        while self.current_app_name == app_name:
+        while True:
             app.mainloop()
 
             self.trellis.sync()
@@ -91,6 +99,12 @@ class Pockey:
             if not self.display.refresh(minimum_frames_per_second=0):
                 print("FRAME DROP")
             self.scan_display_buttons()
+
+            if self.current_app_name != app_name:
+                break
+
+            if os.stat(filename)[9] > modify_date:
+                break
 
         app.teardown()
         self.reset_context()
@@ -101,7 +115,6 @@ class Pockey:
             self.run_app()
 
     def reset_context(self):
-        self.text.enabled = False
-        self.text.reset()
         self.trellis.clear()
         self.trellis.sync()
+        self.reset_display()

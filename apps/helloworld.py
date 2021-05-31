@@ -37,11 +37,13 @@ class HelloWorld(App):
     def light_up_cross(self, number):
         row = number // 4
         for column in range(4):
-            self.pockey.trellis[row, column] = (255, 255, 255)
+            self.pockey.trellis[row, column] = (255, 0, 255)
 
         column = number % 4
         for row in range(4):
-            self.pockey.trellis[row, column] = (255, 255, 255)
+            self.pockey.trellis[row, column] = (255, 255, 0)
+
+        self.pockey.trellis[number // 4, number % 4] = (255, 255, 255)
 
 
 app = HelloWorld

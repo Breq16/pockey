@@ -1,4 +1,4 @@
-from libpockey import Pockey
+from pockey import Pockey
 
 
 class App:

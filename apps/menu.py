@@ -1,3 +1,10 @@
+import os
+
+import terminalio
+import displayio
+import adafruit_imageload
+from adafruit_display_text import label
+
 from pockey.app import App
 
 
@@ -7,11 +14,26 @@ class Menu(App):
     BUTTON_CONFIRM = 2
 
     def setup(self):
-        self.pockey.text.enabled = True
+        bitmap, palette = adafruit_imageload.load(
+            "bmp/menu.bmp",
+            bitmap=displayio.Bitmap,
+            palette=displayio.Palette
+        )
 
-        self.pockey.text[0] = "Main Menu"
+        self.tile_grid = displayio.TileGrid(
+            bitmap,
+            pixel_shader=palette
+        )
 
-        self.apps = list(self.pockey.apps.keys())
+        self.pockey.canvas.append(self.tile_grid)
+
+        self.apps = os.listdir("apps")
+
+        for i, filename in enumerate(self.apps):
+            if filename.endswith(".py"):
+                self.apps[i] = filename[:-3]
+
+        self.apps.remove("menu")
 
         self.app_index = 0
 
@@ -19,7 +41,13 @@ class Menu(App):
         self.pockey.trellis[self.BUTTON_SCROLL_RIGHT] = (255, 255, 255)
         self.pockey.trellis[self.BUTTON_CONFIRM] = (0, 255, 0)
 
-        self.pockey.text[1] = self.apps[self.app_index]
+        self.text_area = label.Label(
+            terminalio.FONT,
+            text=self.apps[self.app_index],
+            color=0xFFFFFF,
+            x=16, y=24
+        )
+        self.pockey.canvas.append(self.text_area)
 
     def handle_button(self, number, edge):
         if edge != self.pockey.RELEASED:
@@ -38,7 +66,7 @@ class Menu(App):
         if number == self.BUTTON_CONFIRM:
             self.pockey.load_app(self.apps[self.app_index])
 
-        self.pockey.text[1] = self.apps[self.app_index]
+        self.text_area.text = self.apps[self.app_index]
 
 
 app = Menu
