@@ -68,5 +68,7 @@ class Menu(App):
 
         self.text_area.text = self.apps[self.app_index]
 
+        self.pockey.request_display_update = True
+
 
 app = Menu

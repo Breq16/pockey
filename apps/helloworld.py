@@ -19,12 +19,16 @@ class HelloWorld(App):
         if isinstance(number, int):
             self.button_state[number] = (edge == self.pockey.PRESSED)
 
+        self.pockey.request_display_update = True
+
     def mainloop(self):
         if self.frame_count % 5 == 0:
             if self.frame_count % 120 < 60:
                 self.pockey.text[0] = f"Hello World! {self.frame_count}"
             else:
                 self.pockey.text[0] = f"Pockey Test App {self.frame_count}"
+
+            self.pockey.request_display_update = True
 
         self.pockey.trellis.clear()
 

@@ -91,13 +91,19 @@ class Pockey:
         self.current_app = app
 
         app.setup()
+
+        self.request_display_update = True
+
         while True:
             app.mainloop()
 
             self.trellis.sync()
             self.text.sync()
-            if not self.display.refresh(minimum_frames_per_second=0):
-                print("FRAME DROP")
+
+            if self.request_display_update:
+                self.display.refresh(minimum_frames_per_second=0)
+                self.request_display_update = False
+
             self.scan_display_buttons()
 
             if self.current_app_name != app_name:
