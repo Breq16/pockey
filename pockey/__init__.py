@@ -7,6 +7,7 @@ import supervisor
 
 import adafruit_displayio_sh1107
 
+from pockey.app import App
 from pockey.button import Button
 from pockey.textcanvas import TextCanvas
 from pockey.trellis import Trellis
@@ -87,7 +88,7 @@ class Pockey:
         filename = app_module.__file__
         modify_date = os.stat(filename)[9]
 
-        app = app_class(self)
+        app: App = app_class(self)
         self.current_app = app
 
         app.setup()
@@ -96,9 +97,10 @@ class Pockey:
 
         while True:
             self.trellis.sync()
-            self.text.sync()
 
             app.mainloop()
+
+            self.text.sync()
 
             if self.request_display_update:
                 self.display.refresh(minimum_frames_per_second=0)
