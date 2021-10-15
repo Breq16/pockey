@@ -95,10 +95,10 @@ class Pockey:
         self.request_display_update = True
 
         while True:
-            app.mainloop()
-
             self.trellis.sync()
             self.text.sync()
+
+            app.mainloop()
 
             if self.request_display_update:
                 self.display.refresh(minimum_frames_per_second=0)

@@ -1,4 +1,4 @@
-from app import App
+from pockey.app import App
 
 
 class HelloWorld(App):
